@@ -8,20 +8,31 @@ st.set_page_config(
 
 st.title("ga111o! DOCUMENT")
 
-with st.chat_message("human"):
-    st.write("ga11o!")
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
 
-with st.chat_message("ai"):
-    st.write("how are u?")
 
-st.chat_input("SEND A MESSAGE")
+def send_message(message, role, save=True):
+    with st.chat_message(role):
+        st.write(message)
+    if save:
+        st.session_state["messages"].append({"message": message, "role": role})
 
-with st.status("embeding file..", expanded=True) as status:
-    time.sleep(2)
-    st.write("getting the file")
-    time.sleep(3)
-    st.write("embeding the file")
-    time.sleep(3)
-    st.write("caching the file")
-    status.update(label="ERROR", state="error")
 
+for message in st.session_state["messages"]:
+    send_message(
+        message["message"],
+        message["role"],
+        save=False,
+    )
+
+
+message = st.chat_input("Send a message to the ai ")
+
+if message:
+    send_message(message, "human")
+    # time.sleep(2)
+    send_message(f"You said: {message}", "ai")
+
+    with st.sidebar:
+        st.write(st.session_state)
