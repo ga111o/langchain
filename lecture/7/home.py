@@ -4,24 +4,32 @@ from langchain.prompts import PromptTemplate
 
 today = datetime.today().strftime("%H:%M:%S")
 
+with st.sidebar:
+
+    st.title("sidebar title")
+    st.text_input("input text!")
 
 st.title("ga11o!")
 
-st.write(today)
 
-select_model = st.selectbox("select model!", ("llama2", "mistral"))
+tab1, tab2, tab3 = st.tabs(["A", "b", "c"])
 
-st.write(select_model)
+with tab1:
+    st.write(today)
 
-if select_model == "llama2":
-    st.write("this is llama2:7b!")
-else:
-    st.write("this is mistral latest!")
+    select_model = st.selectbox("select model!", ("llama2", "mistral"))
 
-        
-    name = st.text_input("input your name!")
+    st.write(select_model)
 
-    st.write(name)
+    if select_model == "llama2":
+        st.write("this is llama2:7b!")
+    else:
+        st.write("this is mistral latest!")
 
-    value = st.slider("temp", min_value=0.1, max_value=0.9)
-    st.write(value)
+            
+        name = st.text_input("input your name!")
+
+        st.write(name)
+
+        value = st.slider("temp", min_value=0.1, max_value=0.9)
+        st.write(value)
