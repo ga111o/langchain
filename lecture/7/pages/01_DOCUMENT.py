@@ -8,11 +8,18 @@ from langchain.embeddings import OllamaEmbeddings, CacheBackedEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema.runnable import RunnablePassthrough
+from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 
 st.set_page_config(
     page_title= "DOCUMENT",
     page_icon="📄",
+)
+
+ollama = ChatOllama(
+    model = "llama2:7b",
+    temperature=0.1,
+    streaming=True,
+    callbacks=[StreamingStdOutCallbackHandler()]
 )
 
 if "messages" not in st.session_state:
@@ -44,8 +51,25 @@ def send_message(message, role, save=True):
     if save:
         st.session_state["messages"].append({"messages": message, "role":role})
 
+def paint_history():
+    for message in st.session_state["messages"]:
+        send_message(message["messages"], message["role"], save=False)
 
 st.title("ga111o! DOCUMENT")
+
+template = ChatPromptTemplate.from_messages(
+    [
+        (
+            "system",
+            """
+            Answer the question using ONLY the following context. If you don't know the answer just say you don't know. DON'T make anything up.
+            
+            Context: {context}
+            """,
+        ),
+        ("human", "{question}"),
+    ]
+)
 
 st.markdown("""
     ### UPLOAD FILE ON THE SIDEBAR
@@ -54,12 +78,25 @@ st.markdown("""
 with st.sidebar:
     file = st.file_uploader("upload file", type=["pdf","txt","docs","jpg","png"])
 
-
+def format_docs(docs):
+    return "\n\n".join(document.page_content for document in docs)
 
 if file:
     retriever = embed_file(file)
-    send_message("READY!", "ai")
+    send_message("READY!", "ai", save=False)
+    paint_history()
     message = st.chat_input("")
     if message:
         send_message(message, "human")
-    
+        chain = (
+            {
+                "context": retriever | RunnableLambda(format_docs),
+                "question": RunnablePassthrough(),
+            }
+            | template
+            | ollama
+        )
+        response = chain.invoke(message)
+        send_message(response.content, "ai")
+else:
+    st.session_state["messages"]=[]
