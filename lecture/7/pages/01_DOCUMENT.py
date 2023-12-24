@@ -2,6 +2,7 @@ import streamlit as st
 import time
 from langchain.chat_models import ChatOllama
 from langchain.callbacks import StreamingStdOutCallbackHandler
+from langchain.callbacks.base import BaseCallbackHandler
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain.embeddings import OllamaEmbeddings, CacheBackedEmbeddings
@@ -15,11 +16,26 @@ st.set_page_config(
     page_icon="📄",
 )
 
+class ChatCallbackHandler(BaseCallbackHandler):
+    message = ""
+
+    def on_llm_start(self, *args, **kwargs):
+        self.message_box = st.empty()
+
+    def on_llm_end(self, *args, **kwargs):
+        save_message(self.message, "ai")
+
+    def on_llm_new_token(self, token, *args, **kwargs):
+        self.message += token
+        self.message_box.markdown(self.message)
+
 ollama = ChatOllama(
     model = "llama2:7b",
     temperature=0.1,
     streaming=True,
-    callbacks=[StreamingStdOutCallbackHandler()]
+    callbacks=[
+        ChatCallbackHandler(),
+    ]
 )
 
 if "messages" not in st.session_state:
@@ -44,6 +60,9 @@ def embed_file(file):
     vectorstore = FAISS.from_documents(docs, cached_embeddings)
     retriever = vectorstore.as_retriever()
     return retriever
+
+def save_message(message, role):
+    st.session_state["messages"].append({"message": message, "role": role})
 
 def send_message(message, role, save=True):
     with st.chat_message(role):
@@ -96,7 +115,7 @@ if file:
             | template
             | ollama
         )
-        response = chain.invoke(message)
-        send_message(response.content, "ai")
+        with st.chat_message("ai"):
+            response = chain.invoke(message)
 else:
     st.session_state["messages"]=[]
