@@ -15,6 +15,10 @@ st.set_page_config(
     page_icon="📄",
 )
 
+if "messages" not in st.session_state:
+    st.session_state["messages"] = []
+
+@st.cache_data(show_spinner="Embedding file...")
 def embed_file(file):
     file_content = file.read()
     file_path = f"./.cache/files/{file.name}"
@@ -26,7 +30,7 @@ def embed_file(file):
         chunk_size=600,
         chunk_overlap=100,
     )
-    loader = UnstructuredFileLoader("./.cache/files/Chaptor One.txt")
+    loader = UnstructuredFileLoader(file_path)
     docs = loader.load_and_split(text_splitter=splitter)
     embeddings = OllamaEmbeddings()
     cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings, cache_dir)
@@ -34,22 +38,28 @@ def embed_file(file):
     retriever = vectorstore.as_retriever()
     return retriever
 
+def send_message(message, role, save=True):
+    with st.chat_message(role):
+        st.markdown(message)
+    if save:
+        st.session_state["messages"].append({"messages": message, "role":role})
+
+
 st.title("ga111o! DOCUMENT")
 
 st.markdown("""
-            # welcome!
-
-            ### this is ga111o! DOCUMENT!
-            
-            upload documents!
+    ### UPLOAD FILE ON THE SIDEBAR
 """)
 
-
-file = st.file_uploader("upload file", type=["pdf","txt","docs","jpg","png"])
+with st.sidebar:
+    file = st.file_uploader("upload file", type=["pdf","txt","docs","jpg","png"])
 
 
 
 if file:
     retriever = embed_file(file)
-    s = retriever.invoke("winston")
-    s
+    send_message("READY!", "ai")
+    message = st.chat_input("")
+    if message:
+        send_message(message, "human")
+    
