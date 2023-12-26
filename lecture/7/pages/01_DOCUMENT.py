@@ -9,12 +9,15 @@ from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 from langchain.memory import ConversationSummaryBufferMemory
+from langchain.globals import set_llm_cache, set_debug
+from langchain.cache import InMemoryCache, SQLiteCache
+
+set_llm_cache(SQLiteCache("./.cache/database/cache.db"))
 
 st.set_page_config(
     page_title= "DOCUMENT",
     page_icon="📄",
 )
-
 
 class ChatCallbackHandler(BaseCallbackHandler):
     message = ""
