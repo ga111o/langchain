@@ -1,7 +1,5 @@
 import streamlit as st
-import time
 from langchain.chat_models import ChatOllama
-from langchain.callbacks import StreamingStdOutCallbackHandler
 from langchain.callbacks.base import BaseCallbackHandler
 from langchain.document_loaders import UnstructuredFileLoader
 from langchain.text_splitter import CharacterTextSplitter
