@@ -66,6 +66,7 @@ def embed_file(file):
 
 def save_message(message, role):
     st.session_state["messages"].append({"message": message, "role": role})
+    set_llm_cache()
 
 def send_message(message, role, save=True):
     with st.chat_message(role):
