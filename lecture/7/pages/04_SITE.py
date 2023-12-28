@@ -39,13 +39,33 @@ st.markdown("""
 """)
 
 with st.sidebar:
-    link = st.text_input("INPUT URL HERE!", placeholder="https://ga111o.me")
+    link = st.text_input(
+        "INPUT URL HERE!",
+        placeholder="https://ga111o.me"
+    )
+
+
+def parse_page(soup):
+    header = soup.find("header")
+    text = header.get_text()
+    return text
+
+
+@st.cache_data
+def load_website(link):
+    loader = SitemapLoader(
+        link,
+        parsing_function=parse_page
+    )
+    loader.requests_per_second = 5
+    docs = loader.load()
+    return docs
+
 
 if link:
     if ".xml" not in link:
         with st.sidebar:
             st.error("need to SITEMAP URL")
     else:
-        loader = SitemapLoader(link)
-        docs = loader.load()
+        docs = load_website(link)
         st.write(docs)
