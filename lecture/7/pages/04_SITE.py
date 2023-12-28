@@ -47,8 +47,12 @@ with st.sidebar:
 
 def parse_page(soup):
     header = soup.find("header")
-    text = header.get_text()
-    return text
+    footer = soup.find("footer")
+    if header:
+        header.decompose()
+    if footer:
+        footer.decompose()
+    return str(soup.get_text()).replace("\n", " ").replace("\xa0", " ")
 
 
 @st.cache_data
