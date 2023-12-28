@@ -9,6 +9,7 @@ from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
 from langchain.document_loaders import SitemapLoader
 from langchain.document_transformers import Html2TextTransformer
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 
 st.set_page_config(
@@ -57,12 +58,16 @@ def parse_page(soup):
 
 @st.cache_data
 def load_website(link):
+    splitter = RecursiveCharacterTextSplitter.from_tiktoken_encoder(
+        chunk_size=1000,
+        chunk_overlap=200,
+    )
     loader = SitemapLoader(
         link,
         parsing_function=parse_page
     )
     loader.requests_per_second = 5
-    docs = loader.load()
+    docs = loader.load_and_split(text_splitter=splitter)
     return docs
 
 
