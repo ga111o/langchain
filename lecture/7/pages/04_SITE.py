@@ -7,72 +7,16 @@ from langchain.embeddings import OllamaEmbeddings, CacheBackedEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
-from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
-from langchain.memory import ConversationSummaryBufferMemory
+from langchain.document_loaders import AsyncChromiumLoader
+from langchain.document_transformers import Html2TextTransformer
+
 
 st.set_page_config(
-    page_title= "SITE",
+    page_title="SITE",
     page_icon="📄",
 )
 
-class ChatCallbackHandler(BaseCallbackHandler):
-    message = ""
-
-    def on_llm_start(self, *args, **kwargs):
-        self.message_box = st.empty()
-
-    def on_llm_end(self, *args, **kwargs):
-        save_message(self.message, "ai")
-
-    def on_llm_new_token(self, token, *args, **kwargs):
-        self.message += token
-        self.message_box.markdown(self.message)
-
-ollama = ChatOllama(
-    model = "llama2:7b",
-    temperature=0.1,
-    streaming=True,
-    callbacks=[
-        ChatCallbackHandler(),
-    ]
-)
-
-if "messages" not in st.session_state:
-    st.session_state["messages"] = []
-
-@st.cache_data(show_spinner="Embedding file...")
-def embed_file(file):
-    file_content = file.read()
-    file_path = f"./.cache/files/{file.name}"
-    with open(file_path, "wb") as f:
-        f.write(file_content)
-    cache_dir = LocalFileStore(f"./.cache/embedings/{file.name}")
-    splitter = CharacterTextSplitter.from_tiktoken_encoder(
-        separator="\n",
-        chunk_size=600,
-        chunk_overlap=100,
-    )
-    loader = UnstructuredFileLoader(file_path)
-    docs = loader.load_and_split(text_splitter=splitter)
-    embeddings = OllamaEmbeddings()
-    cached_embeddings = CacheBackedEmbeddings.from_bytes_store(embeddings, cache_dir)
-    vectorstore = FAISS.from_documents(docs, cached_embeddings)
-    retriever = vectorstore.as_retriever()
-    return retriever
-
-def save_message(message, role):
-    st.session_state["messages"].append({"message": message, "role": role})
-    set_llm_cache()
-
-def send_message(message, role, save=True):
-    with st.chat_message(role):
-        st.markdown(message)
-    if save:
-        st.session_state["messages"].append({"messages": message, "role":role})
-
-def paint_history():
-    for message in st.session_state["messages"]:
-        send_message(message["messages"], message["role"], save=False)
+html2text_transformer = Html2TextTransformer()
 
 st.title("ga111o! SITE")
 
@@ -96,3 +40,9 @@ st.markdown("""
 
 with st.sidebar:
     link = st.text_input("INPUT URL HERE!", placeholder="https://ga111o.me")
+
+if link:
+    loader = AsyncChromiumLoader([link])
+    docs = loader.load()
+    transformed = html2text_transformer.transform_documents(docs)
+    st.write(docs)
