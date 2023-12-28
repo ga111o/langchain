@@ -7,7 +7,7 @@ from langchain.embeddings import OllamaEmbeddings, CacheBackedEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 from langchain.prompts import ChatPromptTemplate
-from langchain.document_loaders import AsyncChromiumLoader
+from langchain.document_loaders import SitemapLoader
 from langchain.document_transformers import Html2TextTransformer
 
 
