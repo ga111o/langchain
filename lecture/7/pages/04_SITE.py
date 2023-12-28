@@ -42,7 +42,10 @@ with st.sidebar:
     link = st.text_input("INPUT URL HERE!", placeholder="https://ga111o.me")
 
 if link:
-    loader = AsyncChromiumLoader([link])
-    docs = loader.load()
-    transformed = html2text_transformer.transform_documents(docs)
-    st.write(docs)
+    if ".xml" not in link:
+        with st.sidebar:
+            st.error("need to SITEMAP URL")
+    else:
+        loader = SitemapLoader(link)
+        docs = loader.load()
+        st.write(docs)
