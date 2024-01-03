@@ -62,9 +62,13 @@ def load_website(link):
         chunk_size=1000,
         chunk_overlap=200,
     )
-    loader = SitemapLoader(
+    map_loader = SitemapLoader(
         link,
         parsing_function=parse_page
+    )
+    loader = UnstructuredFileLoader(
+        link,
+        parsing_function=parse_page,
     )
     loader.requests_per_second = 5
     docs = loader.load_and_split(text_splitter=splitter)
@@ -72,9 +76,5 @@ def load_website(link):
 
 
 if link:
-    if ".xml" not in link:
-        with st.sidebar:
-            st.error("need to SITEMAP URL")
-    else:
-        docs = load_website(link)
-        st.write(docs)
+    docs = load_website(link)
+    st.write(docs)
