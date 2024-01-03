@@ -120,4 +120,4 @@ if link:
             "question": RunnablePassthrough(),
         } | RunnableLambda(get_answers)
 
-        chain.invoke("What is Linux?")
+        chain.invoke("Explain me about Linux?")
