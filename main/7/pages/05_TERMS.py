@@ -22,9 +22,6 @@ class ChatCallbackHandler(BaseCallbackHandler):
     def on_llm_start(self, *args, **kwargs):
         self.message_box = st.empty()
 
-    def on_llm_end(self, *args, **kwargs):
-        save_message(self.message, "ai")
-
     def on_llm_new_token(self, token, *args, **kwargs):
         self.message += token
         self.message_box.markdown(self.message)
@@ -65,10 +62,6 @@ def embed_file(file):
     return retriever
 
 
-def save_message(message, role):
-    st.session_state["messages"].append({"message": message, "role": role})
-
-
 def send_message(message, role, save=True):
     with st.chat_message(role):
         st.markdown(message)
@@ -89,12 +82,11 @@ template = ChatPromptTemplate.from_messages(
         (
             "system",
             """
-            Answer the interpretation and summary using ONLY the following context. If you don't know the answer just say you don't know. DON'T make anything up.
+            Just answer the key point using ONLY the following context. If you don't know the answer just say you don't know. DON'T make anything up.
             
             Context: {context}
             """,
         ),
-        ("human", "{question}"),
     ]
 )
 
@@ -113,20 +105,14 @@ def format_docs(docs):
 
 if file:
     retriever = embed_file(file)
-    send_message("READY!", "ai", save=False)
-    paint_history()
-    message = st.chat_input("")
-    if message:
-        send_message(message, "human")
-        chain = (
-            {
-                "context": retriever | RunnableLambda(format_docs),
-                "question": RunnablePassthrough(),
-            }
-            | template
-            | ollama
-        )
-        with st.chat_message("ai"):
-            response = chain.invoke(message)
+    chain = (
+        {
+            "context": retriever | RunnableLambda(format_docs),
+        }
+        | template
+        | ollama
+    )
+    send_message(chain.invoke(retriever), "ai")
+
 else:
     st.session_state["messages"] = []
