@@ -103,16 +103,20 @@ def format_docs(docs):
     return "\n\n".join(document.page_content for document in docs)
 
 
-if file:
-    retriever = embed_file(file)
-    chain = (
-        {
-            "context": retriever | RunnableLambda(format_docs),
-        }
-        | template
-        | ollama
-    )
-    send_message(chain.invoke(retriever), "ai")
+with st.status("loading..."):
+    if file:
+        st.write("embedding...")
+        retriever = embed_file(file)
+        chain = (
+            {
+                "context": retriever | RunnableLambda(format_docs),
+            }
+            | template
+            | ollama
+        )
+        st.write("chain invoking...")
+        send_message(chain.invoke(retriever), "ai")
+        st.balloons()
 
-else:
-    st.session_state["messages"] = []
+    else:
+        st.session_state["messages"] = []
